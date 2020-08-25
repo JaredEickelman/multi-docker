@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jeickelman/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jeickelman/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jeickelman/multi-nginx ./nginx
+  - docker build -t jeickelman/multi-client ./client
+  - docker build -t jeickelman/multi-server ./server
+  - docker build -t jeickelman/multi-worker ./worker
+  # Docker CLI
+  - echo "DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push jeickelman/multi-nginx
+  - docker push jeickelman/multi-client
+  - docker push jeickelman/multi-server
+  - docker push jeickelman/multi-worker
